@@ -16,6 +16,7 @@ import {
     Matrix4,
     OrthographicCamera,
     PerspectiveCamera,
+    Quaternion,
     Raycaster,
     Sphere,
     Vector3,
@@ -185,6 +186,30 @@ export class CameraController extends Observable implements ICameraController {
         }
 
         this._rotateCenter = undefined;
+    }
+
+    private getRotation(): Quaternion {
+        const eye = this._camera.position;
+        const center = this._target;
+        const up = this._camera.up;
+
+        let f = center.sub(eye);
+        f.normalize();
+
+        let s = f.cross(up);
+        s.normalize();
+
+        let u = s.cross(f);
+        u.normalize();
+
+        /// Col Major
+        let rotMat = new Matrix4(s.x, u.x, -f.x, 0, s.y, u.y, -f.y, 0, s.z, u.z, -f.z, 0, 0, 0, 0, 1);
+        rotMat.transpose();
+
+        let quat = new Quaternion();
+        quat.setFromRotationMatrix(rotMat);
+        quat.invert();
+        return quat;
     }
 
     rotate(dx: number, dy: number): void {
